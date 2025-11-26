@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+CloudClip- A Cloudinary Media Management & Optimization System
 
-## Getting Started
+A full-stack media management platform built with Next.js (TypeScript) and Cloudinary (AI-Integration), enabling secure uploads, real-time transformations, and advanced asset management. This project demonstrates production-grade cloud storage integration, dashboard UI, and automated media workflows.
 
-First, run the development server:
+🚀 Features
+🔐 Secure Uploads
 
-```bash
+Client & server-side validation
+
+Environment-based Cloudinary configuration
+
+Signed upload presets for secure file handling
+
+🖼 Real-Time Media Optimization
+
+Auto-quality & auto-format
+
+Resize, crop, rotate, compress
+
+Smart cropping using face detection
+
+Watermarks & overlays
+
+URL-based transformations
+
+📁 Asset Management Dashboard
+
+Live preview of images & videos
+
+Image Transformation and Video Compression using Cloudinary AI
+
+Display metadata (size, format, resolution, tags)
+
+Delete or update assets
+
+Copy CDN links instantly
+
+🔎 Search & Tagging
+
+Tag-based asset organization
+
+Search via Cloudinary Search API
+
+👤 Authentication
+
+Login / Signup integrated with Clerk
+
+Protected routes
+
+User sessions for personalized management
+
+🧩 Tech Stack
+Layer	Tech Used
+Frontend	Next.js 14, React, TypeScript, Tailwind CSS
+Backend	Next.js API Routes
+Cloud Storage	Cloudinary (Upload API, Admin API)
+Authentication	Clerk
+UI Components	DaisyUI / Shadcn UI
+
+
+⚙️ Getting Started
+1️⃣ Clone the Repository
+git clone https://github.com/your-username/cloudinary-project.git
+cd cloudinary-project
+
+2️⃣ Install Dependencies
+npm install
+
+3️⃣ Setup Environment Variables
+
+Create a .env.local file:
+
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+CLOUDINARY_UPLOAD_PRESET=your_preset
+CLERK_PUBLISHABLE_KEY=your_key
+CLERK_SECRET_KEY=your_key
+
+4️⃣ Run Locally
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Your app starts at:
+http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+🧪 Available APIs
+Video- Upload API
 
-## Learn More
+Handles secure uploads with signed presets.
 
-To learn more about Next.js, take a look at the following resources:
+Image- Upload API
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Handles secure image uploads.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+📈 Future Enhancements
 
-## Deploy on Vercel
+Drag & drop multi-upload
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Private assets with signed URLs
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Asset folders & collections
+
+Detailed analytics (views, bandwidth, transformations)
+
+
+📜 License
+
+MIT License © 2025
