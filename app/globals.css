@@ -1,4 +1,11 @@
 @import "tailwindcss";
+@plugin "daisyui";
+
+/* Optional: DaisyUI theme configuration via CSS variables */
+@theme {
+  /* Example customizing primary color using Tailwind v4 theme variables */
+  /* --color-primary: var(--color-blue-600); */
+}
 
 :root {
   --background: #ffffff;
