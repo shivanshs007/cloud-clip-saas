@@ -1,94 +1,114 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
-import { auth } from '@clerk/nextjs/server';
-import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from "next/server";
+import { v2 as cloudinary } from "cloudinary";
+import { auth } from "@clerk/nextjs/server";
+import { PrismaClient } from "@prisma/client";
 
+const prisma = new PrismaClient();
 
-const prisma = new PrismaClient()
-
-// Configuration
+// Configure Cloudinary for Admin API access
 cloudinary.config({
-    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET // Click 'View Credentials' below to copy your API secret
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-interface CloudinaryUploadResult {
-    public_id: string;
-    bytes: number;
-    duration?: number
-    [key: string]: any
+// Request body type for video metadata
+interface VideoMetadataRequest {
+  url: string;
+  publicId: string;
+  duration: number;
+  format: string;
+  compressedSize: number;
+  title: string;
+  description: string;
+  originalSize: number;
 }
 
+// Get compressed video size using Cloudinary's explicit API
+async function getCompressedSize(publicId: string): Promise<number> {
+  try {
+    // Use explicit API to generate the compressed transformation and get its size
+    const result = await cloudinary.uploader.explicit(publicId, {
+      type: "upload",
+      resource_type: "video",
+      eager: [{ quality: "auto", format: "mp4" }],
+      eager_async: false, // Wait for transformation to complete
+    });
+
+    // The eager array contains the transformation results with bytes
+    if (result.eager && result.eager[0] && result.eager[0].bytes) {
+      return result.eager[0].bytes;
+    }
+
+    // Fallback: return the original bytes if eager transformation failed
+    return result.bytes || 0;
+  } catch (error) {
+    console.error("Failed to get compressed size:", error);
+    return 0;
+  }
+}
 export async function POST(request: NextRequest) {
-
-
-    try {
-
-        const { userId } = await auth();
+  try {
+    const { userId } = await auth();
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if(
-        !process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
-        !process.env.CLOUDINARY_API_KEY ||
-        !process.env.CLOUDINARY_API_SECRET
-    ){
-        return NextResponse.json({error: "Cloudinary credentials not found"}, {status: 500})
+    // Verify Cloudinary credentials for fetching compressed size
+    if (
+      !process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+      !process.env.CLOUDINARY_API_KEY ||
+      !process.env.CLOUDINARY_API_SECRET
+    ) {
+      return NextResponse.json(
+        { error: "Cloudinary credentials not configured" },
+        { status: 500 }
+      );
     }
 
+    // Parse JSON body (no file handling - video uploaded directly to Cloudinary from browser)
+    const body: VideoMetadataRequest = await request.json();
 
-        const formData = await request.formData();
-        const file = formData.get("file") as File | null;
-        const title = formData.get("title") as string;
-        const description = formData.get("description") as string;
-        const originalSize = formData.get("originalSize") as string;
+    const { publicId, duration, title, description, originalSize } = body;
 
-        if(!file){
-            return NextResponse.json({error: "File not found"}, {status: 400})
-        }
-
-        const bytes = await file.arrayBuffer()
-        const buffer = Buffer.from(bytes)
-
-        const result = await new Promise<CloudinaryUploadResult>(
-            (resolve, reject) => {
-                const uploadStream = cloudinary.uploader.upload_stream(
-                    {
-                        resource_type: "video",
-                        folder: "video-uploads",
-                        transformation: [
-                            {quality: "auto", fetch_format: "mp4"},
-                        ]
-                    },
-                    (error, result) => {
-                        if(error) reject(error);
-                        else resolve(result as CloudinaryUploadResult);
-                    }
-                )
-                uploadStream.end(buffer)
-            }
-        )
-        const video = await prisma.video.create({
-            data: {
-                title,
-                description,
-                publicId: result.public_id,
-                originalSize: originalSize,
-                compressedSize: String(result.bytes),
-                duration: result.duration || 0,
-                userId,
-            }
-        })
-        return NextResponse.json(video)
-
-    } catch (error) {
-        console.log("UPload video failed", error)
-        return NextResponse.json({error: "UPload video failed"}, {status: 500})
-    } finally{
-        await prisma.$disconnect()
+    // Validate required fields
+    if (!publicId || !title) {
+      return NextResponse.json(
+        {
+          error: "Missing required fields: publicId and title are required",
+        },
+        { status: 400 }
+      );
     }
 
+    // Fetch the actual compressed size from Cloudinary
+    const compressedSize = await getCompressedSize(publicId);
+
+    // Save video metadata to database
+    const video = await prisma.video.create({
+      data: {
+        title,
+        description: description || "",
+        publicId,
+        originalSize: String(originalSize),
+        compressedSize: String(compressedSize || originalSize), // Fallback to original if compression fetch fails
+        duration: duration || 0,
+        userId,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      video,
+    });
+  } catch (error) {
+    console.error("Failed to save video metadata:", error);
+    return NextResponse.json(
+      { error: "Failed to save video metadata" },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
 }
